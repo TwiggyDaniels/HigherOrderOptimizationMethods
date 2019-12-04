@@ -23,7 +23,12 @@ def gradient(x):
 
     return grad
 
-def line_search():
+def line_search(a, b, grad, obj_val, x):
+    s = 1.0
+    while ( eval_obj(x - (s * grad))  > 
+        ( obj_val - (a * s * (np.linalg.norm(grad, ord=2)**2)) )):
+        s *= b
+    return s
     #TODO
 
 # derivative with respect to x_i
