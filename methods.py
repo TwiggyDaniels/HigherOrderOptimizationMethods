@@ -1,63 +1,164 @@
+import time
+
 import numpy as np
 
-# create an x of length n
-def init_x(n):
-    x = np.ones((n))
-    x[::2] -= 2.2
-    return x
+from helpers import gradient, find_a_next, find_dynamic_momentum, 
+    line_search, iterator
 
-# evaluate the function at x
-def eval_obj(x):
-    val = 0
-    for i in range(1, x.shape[0]):
-        val += 100 * ((x[i] - ((x[i-1])**2))**2) + ((1 - x[i-1])**2)
-    return val
+# Inexact Line Search
+# Backtracking Constants
+ALPHA = 0.5
+BETA = 0.5
 
-# the gradient at some particular x_i and x_{i-1}
-def gradient(x):
-    grad = np.zeros_like(x)
+# estimate of the Lipschitz Constant
+LIPSCHITZ = 0.5
 
-    for i in range(1, x.shape[0]):
-        grad[i] += d_x(x[i], x[i-1])
-        grad[i-1] += d_ximo(x[i], x[i-1])
+# momentum value
+MOMENTUM = 0.5
 
-    return grad
+# estimate of the Condition Number
+KAPPA = 2
+RECIPROCAL_KAPPA = 1 / KAPPA
 
-def line_search(a, b, grad, obj_val, x):
-    s = 1.0
-    while ( eval_obj(x - (s * grad))  > 
-        ( obj_val - (a * s * (np.linalg.norm(grad, ord=2)**2)) )):
-        s *= b
-    return s
-    #TODO
+iterations = 100
+input_size = 10
 
-# derivative with respect to x_i
-def d_x(x_i, x_imo):
-    #TODO
+# Perform the gradient descent method
+def heavy_ball(x_init, iterations, early_stop=0, alpha, beta):
 
-# derivative with respect to x_i-1
-def d_ximo(x_i, x_imo):
-    #TODO
+    # packed arguments for the iterator
+    arguments = [x, alpha, beta]
 
-def gradient_descent(x, a):
-    x -= np.dot(a, gradient(x))
-    return x
+    # call the iterator
+    return iterator(gradient_descent_iteration, 
+            arguments, iterations, early_stop)
 
-def heavy_ball(x_k, x_kmo, a, b):
-    # gradient
-    x -= np.dot(a, gradient(x)) 
-    # momentum
-    x += np.dot(b, (x_k - x_kmo))
-    return x
+def gradient_descent_iterator(x, alpha, beta):
+    
+    # get the start time of the iteration
+    start_time = time.time()
+
+    # evaluate at x
+    grad = gradient(x)
+    obj_val = eval_objective(x)
+
+    # perform backtracking line search
+    step_size = line_search(grad, obj_val, x, alpha, beta)
+
+    # perform actual gradient descent
+    x_next = x - np.dot(step_size, grad)
+
+    return [x_next, alpha, beta], (time.time() - start_time)
+
+
+
+
+# Perform the heavy ball method
+def heavy_ball(x_init, iterations, early_stop=0, alpha, beta, momentum):
+
+    # packed arguments for the iterator
+    arguments = [x_init, x_init, alpha, beta, momentum]
+
+    # call the iterator
+    return iterator(heavy_ball_iteration, arguments, iterations, early_stop)
+
+# Perform a single iteration of the Heavy Ball method
+# at a particular x_k and x_{k-1}
+def heavy_ball_iteration(x, x_prev, alpha, beta, momentum):
+    
+    # get the start time of the iteration
+    start_time = time.time()
+
+    # evaluate at x
+    grad = gradient(x)
+    obj_val = eval_objective(x)
+
+    # perform backtracking line search
+    step_size = line_search(grad, obj_val, x, alpha, beta)
+
+    # subtract the gradient and add momentum
+    x_next = x - np.dot(step_size, grad) + np.dot(momentum, (x - x_prev))
+
+    return [x_next, x, alpha, beta, momentum], (time.time() - start_time)
+
+
+
 
 def p_r_conjugate_gradient():
+    
+    # get the start time of the iteration
+    start_time = time.time()
     #TODO
 
-def n_acc_gradient_descent():
-    #TODO
 
-def fista():
-    #TODO
 
-def barzilai_borwein():
+def acc_grad_descent_iteration(x_init, iterations, early_stop=0, a, lipschitz, recip_kappa):
+
+    # packed arguments for the iterator
+    arguments = [x_init, x_init, a, lipschitz, recip_kappa]
+
+    # call the iterator
+    return iterator(acc_grad_descent_iteration, arguments, iterations, early_stop)
+
+def acc_grad_descent_iteration(x, y, a, lipschitz, recip_kappa):
+    
+    # get the start time of the iteration
+    start_time = time.time()
+
+    # find x_{k+1} (regular gradient step)
+    x_next = y - ((1/lipschitz) * gradient(y))
+
+    # find a_{k+1} from a_k
+    a_next = find_a_next(a, recip_kappa)
+
+    # find B_k
+    dynamic_momentum = find_dynamic_momentum(a, a_next)
+
+    # find y_{k_1} (sliding step)
+    y_next = x_next + dynamic_momentum(x_next - x)
+
+    return [x_next, y_next, a_next, lipschitz, recip_kappa], (start_time - time.time())
+
+
+
+# TODO
+def fista(x_init, iterations, early_stop=0):
+
+    # packed arguments for the iterator
+    arguments = []
+
+    # call the iterator
+    return iterator(fista_iteration, arguments, iterations, early_stop)
+
+def fista_iteration():
+    
+    # get the start time of the iteration
+    start_time = time.time()
     #TODO
+    pass
+
+
+
+def barzilai_borwein_iter(x_init, iterations, early_stop=0):
+
+    # packed arguments for the iterator
+    arguments = [x_init, WHAT GOES HERE?>?? FOR X_-1???, gradient(x_init)]
+
+    # call the iterator
+    return iterator(acc_grad_descent_iteration, arguments, iterations, early_stop)
+
+def bb_iter(x, x_prev, grad_prev):
+    
+    # get the start time of the iteration
+    start_time = time.time()
+
+    grad = gradient(x)
+    r = x - x_prev
+    q = grad - grad_prev
+
+    # TODO: confirm you don't need transposes here...
+    step_size = np.dot(r, q) / np.dot(q, q)
+
+    x_next = x - (step_size * grad)
+
+    return [x_next, x, grad], (start_time - time.time())
