@@ -1,8 +1,16 @@
+import math
 import cmath
 import random
 
 import numpy as np
 import matplotlib.pyplot as plt
+
+# configure to catch overflows as errors
+import warnings
+warnings.filterwarnings("error")
+
+# define the golden ratio constant
+GOLDEN_RATIO = (math.sqrt(5) + 1) / 2
 
 # Create an x of length n [-1.2, 1.0, -1.2, 1.0, ...]
 #
@@ -127,12 +135,38 @@ def find_dynamic_momentum(a, a_next):
 #   returns:
 #       step_size   : the step size for the iteration update
 #
-def line_search(grad, obj_val, x, alpha, beta):
+def inexact_line_search(grad, obj_val, x, alpha, beta):
     step_size = 1.0
     while ( eval_objective(x - (step_size * grad))  > 
         ( obj_val - (alpha * step_size * (np.linalg.norm(grad, ord=2)**2)) )):
         step_size *= beta
     return step_size
+
+# Perform the golden search with initial brackets {0, bracket_high} for
+# some number of iterations since unimodality guaranteed be claimed on
+# the interval provided.
+def exact_line_search(x, grad, bracket_high=1, attempts=100, early_stop=1E-5):
+
+    high = bracket_high
+    low = 0
+
+    high_minus = high - ( (high - low) / GOLDEN_RATIO)
+    low_plus = low + ( (high - low) / GOLDEN_RATIO)
+
+    i = 1
+    while i < attempts and abs(high_minus - low_plus) > early_stop:
+        if eval_objective(x - (high_minus * grad)) < \
+            eval_objective(x - (low_plus * grad)):
+            high = low_plus
+        else:
+            low = high_minus
+
+        high_minus = high - ( (high - low) / GOLDEN_RATIO)
+        low_plus = low + ( (high - low) / GOLDEN_RATIO)
+    
+        i += 1
+
+    return (high + low) / 2
 
 # Optimize the objective function with the provided argument
 #
@@ -171,7 +205,7 @@ def iterator(method_iterator, arguments, iterations, early_stop):
 
         # check for early stopping by relative error
         if results[i] == 0 or ( (i > 0) and 
-                np.linalg.norm(x_i - x_imo, ord=2) <= 
+                np.linalg.norm(x_i - x_imo, ord=2) < 
                 ( early_stop * np.linalg.norm(x_i, ord=2) ) ):
             return results, i + 1, total_runtime
 
@@ -180,12 +214,9 @@ def iterator(method_iterator, arguments, iterations, early_stop):
 
     return results, iterations, total_runtime
 
-def line_graph(results, title):
+def plot_results(results, title):
     # plot for each method in the data by the key and
     # note that the 0'th element is the array of obj vals
-
-    # turn on interactive mode to open all the graphs without blocking
-    #plt.ion()
 
     # plot the objective value graphs
     for i in range(2):
@@ -247,7 +278,7 @@ def line_graph(results, title):
         plt.xticks(m_idx, m)
     
         for y in range(len(m_idx)):
-            plt.text(x=m_idx[y]-0.2, y=data[y]+0.05, s="{:.3f}".format(data[y]), size=10)
+            plt.text(x=m_idx[y]-0.2, y=data[y]+0.02, s="{:.3f}".format(data[y]), size=10)
     
         #plt.subplots_adjust(top=2)
     

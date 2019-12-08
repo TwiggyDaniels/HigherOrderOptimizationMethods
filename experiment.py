@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib as plt
 
-from helpers import init_x, line_graph#, time_graph
+from helpers import init_x, plot_results
 from methods import gradient_descent, heavy_ball, barzilai_borwein, \
     accelerated_gradient_descent, conjugate_gradient, fista
 
@@ -23,11 +23,13 @@ MOMENTUM = 0.2#0.4
 KAPPA = 2
 RECIPROCAL_KAPPA = 1 / KAPPA
 
-ITERATIONS = 12
+ITERATIONS = 32
 
-EARLY_STOP=0
+EARLY_STOP=1E-3
 
-sizes = [5]
+BRACKET_HIGH=1.0
+
+sizes = [5, 10, 50]
 
 
 for size in sizes:
@@ -35,12 +37,11 @@ for size in sizes:
     results = {}
     # perform all the methods and store them in a dictionary
     results['Gradient Descent'] = gradient_descent(x, ITERATIONS, ALPHA, BETA, early_stop=EARLY_STOP)
-    results['Heavy Ball'] = heavy_ball(x, ITERATIONS, ALPHA, BETA, MOMENTUM)
-    #results['Conjugate Gradient'] = 
+    results['Heavy Ball'] = heavy_ball(x, ITERATIONS, ALPHA, BETA, MOMENTUM, early_stop=EARLY_STOP)
+    results['Conjugate Gradient'] = conjugate_gradient(x, ITERATIONS, BRACKET_HIGH, early_stop=EARLY_STOP)
     results['Accelerated Gradient Descent'] = accelerated_gradient_descent(x, \
-            ITERATIONS, ALPHA, BETA, A, LIPSCHITZ, RECIPROCAL_KAPPA)
-    results['FISTA'] = fista(x, ITERATIONS, ALPHA, BETA)
-    results['Barzilai Borwein'] = barzilai_borwein(x, ITERATIONS)
+            ITERATIONS, ALPHA, BETA, A, LIPSCHITZ, RECIPROCAL_KAPPA, early_stop=EARLY_STOP)
+    results['FISTA'] = fista(x, ITERATIONS, ALPHA, BETA, early_stop=EARLY_STOP)
+    results['Barzilai Borwein'] = barzilai_borwein(x, ITERATIONS, early_stop=EARLY_STOP)
 
-    line_graph(results, 'Convergences for Size' + str(size))
-    #time_graph(results, 'Method Times')
+    plot_results(results, 'Convergences for Size' + str(size))

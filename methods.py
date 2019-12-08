@@ -4,7 +4,7 @@ import math
 import numpy as np
 
 from helpers import eval_objective, gradient, find_a_next, find_dynamic_momentum, \
-    line_search, iterator
+    inexact_line_search, exact_line_search, iterator
 
 # Perform the gradient descent method
 def gradient_descent(x_init, iterations, alpha, beta, early_stop=0):
@@ -26,7 +26,7 @@ def gd_iter(x, alpha, beta):
     obj_val = eval_objective(x)
 
     # perform backtracking line search
-    step_size = line_search(grad, obj_val, x, alpha, beta)
+    step_size = inexact_line_search(grad, obj_val, x, alpha, beta)
 
     # perform actual gradient descent
     x_next = x - np.dot(step_size, grad)
@@ -58,7 +58,7 @@ def hb_iter(x, x_prev, alpha, beta, momentum):
     obj_val = eval_objective(x)
 
     # perform backtracking line search
-    step_size = line_search(grad, obj_val, x, alpha, beta)
+    step_size = inexact_line_search(grad, obj_val, x, alpha, beta)
 
     # subtract the gradient and add momentum
     x_next = (x - np.dot(step_size, grad)) + np.dot(momentum, (x - x_prev))
@@ -68,12 +68,34 @@ def hb_iter(x, x_prev, alpha, beta, momentum):
 
 
 
-def conjugate_gradient():
+def conjugate_gradient(x_init, iterations, bracket_high, early_stop=0):
     
     # get the start time of the iteration
     start_time = time.time()
-    #TODO
+    
+    arguments = [x_init, bracket_high]
 
+    # call the iterator
+    results, iters, total_runtime = iterator(conj_grad_iter, arguments, iterations, early_stop)
+    return results, iters, total_runtime 
+
+def conj_grad_iter(x, bracket_high):
+
+    # get the start time of the iteration
+    start_time = time.time()
+
+    d = -1 * gradient(x)
+
+    # perform the inner loop of the method but one time since scalar output
+    # NOTE: d is made positive since inexact_line_search performs 
+    # argmin(x - s * grad)
+    step_size = exact_line_search(x, -1 * d, 
+            bracket_high = bracket_high)
+
+    # update x_next
+    x_next = x + (step_size * d)
+
+    return [x_next, bracket_high], (time.time() - start_time)
 
 
 def accelerated_gradient_descent(x_init, iterations, alpha, beta, a, lipschitz, recip_kappa, early_stop=0):
@@ -91,7 +113,7 @@ def agd_iter(x, y, alpha, beta, a, lipschitz, recip_kappa):
     start_time = time.time()
 
     grad = gradient(x)
-    step_size = line_search(grad, eval_objective(x), x, alpha, beta)
+    step_size = inexact_line_search(grad, eval_objective(x), x, alpha, beta)
 
     # find x_{k+1} (regular gradient step)
     #x_next = y - ((1/lipschitz) * gradient(y))
@@ -144,7 +166,7 @@ def fista_iter(x, y, t, alpha, beta):
 
     print(t)
     '''
-    step_size = line_search(gradient(x), eval_objective(x), x, alpha, beta)
+    step_size = inexact_line_search(gradient(x), eval_objective(x), x, alpha, beta)
 
     x_next = y - (step_size * gradient(y))
 
@@ -175,7 +197,7 @@ def bb_iter(x, x_prev, grad_prev):
         grad = gradient(x)
 
         # simple line search with alpha = beta = 0.5
-        step_size = line_search(grad, eval_objective(x), x, 0.5, 0.5)
+        step_size = inexact_line_search(grad, eval_objective(x), x, 0.5, 0.5)
 
         # simple gradient descent
         x_next = x - np.dot(step_size, grad)
