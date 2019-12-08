@@ -98,16 +98,16 @@ def conj_grad_iter(x, bracket_high):
     return [x_next, bracket_high], (time.time() - start_time)
 
 
-def accelerated_gradient_descent(x_init, iterations, alpha, beta, a, lipschitz, recip_kappa, early_stop=0):
+def accelerated_gradient_descent(x_init, iterations, alpha, beta, a, early_stop=0):
 
     # packed arguments for the iterator
-    arguments = [x_init, x_init, alpha, beta, a, lipschitz, recip_kappa]
+    arguments = [x_init, x_init, alpha, beta, a]
 
     # call the iterator
     results, iters, total_runtime = iterator(agd_iter, arguments, iterations, early_stop)
     return results, iters, total_runtime 
 
-def agd_iter(x, y, alpha, beta, a, lipschitz, recip_kappa):
+def agd_iter(x, y, alpha, beta, a):
     
     # get the start time of the iteration
     start_time = time.time()
@@ -116,26 +116,19 @@ def agd_iter(x, y, alpha, beta, a, lipschitz, recip_kappa):
     step_size = inexact_line_search(grad, eval_objective(x), x, alpha, beta)
 
     # find x_{k+1} (regular gradient step)
-    #x_next = y - ((1/lipschitz) * gradient(y))
     y_next = x - (step_size * gradient(x))
     
-    '''
     # find a_{k+1} from a_k
-    a_next = find_a_next(a, recip_kappa)
-
-    # find B_k
-    dynamic_momentum = find_dynamic_momentum(a, a_next)
-    '''
-
     a_next = (1 + math.sqrt(4 * (a**2))) / 2
+    #a_next = find_a_next(a, recip_kappa)
 
     dynamic_momentum = (1 - a) / a_next
+    #dynamic_momentum = find_dynamic_momentum(a, a_next)
 
     # find y_{k_1} (sliding step)
     x_next = y_next + (dynamic_momentum * (y_next - y))
 
-    return [x_next, y_next, alpha, beta, a_next, lipschitz, recip_kappa], (time.time() - start_time)
-
+    return [x_next, y_next, alpha, beta, a_next], (time.time() - start_time)
 
 
 
@@ -154,18 +147,7 @@ def fista_iter(x, y, t, alpha, beta):
     start_time = time.time()
     
     t_next = 0.5 * (1 + math.sqrt(1 + (4 * (t**2))))
-    '''
-    der_g_y = np.zeros_like(y, dtype=np.float64)
-    for i in range(0, y.shape[0]-1):
-        der_g_y[i] += 1 - (2 * y[i]) + (y[i]**2)
 
-    x_next = y - ((1/lipschitz) * gradient(y))
-    #x_next = y - ((1/lipschitz) * der_g_y)
-
-    t_next = 0.5 * (1 + math.sqrt(1 + (4 * (t**2))))
-
-    print(t)
-    '''
     step_size = inexact_line_search(gradient(x), eval_objective(x), x, alpha, beta)
 
     x_next = y - (step_size * gradient(y))
@@ -211,7 +193,6 @@ def bb_iter(x, x_prev, grad_prev):
     r = x - x_prev
     q = grad - grad_prev
 
-    # TODO: confirm you don't need transposes here...
     step_size = np.dot(r, q) / np.dot(q, q)
 
     x_next = x - (step_size * grad)

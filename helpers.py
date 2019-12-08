@@ -214,7 +214,7 @@ def iterator(method_iterator, arguments, iterations, early_stop):
 
     return results, iterations, total_runtime
 
-def plot_results(results, title):
+def plot_results(results, vector_size):
     # plot for each method in the data by the key and
     # note that the 0'th element is the array of obj vals
 
@@ -233,12 +233,13 @@ def plot_results(results, title):
         # set up the rest of the line graph
         plt.ylabel('Objective Value')
         plt.xlabel('Iteration')
-        plt.title("Linear Comparison")
+        plt.title("Linear Comparison (n=" + str(vector_size) + ")")
         plt.grid(True)
         plt.legend()
 
         # change to log scale
         if i == 1:
+            plt.title("Log Comparison (n=" + str(vector_size) + ")")
             plt.yscale("log")
             plt.yscale("log")
 
@@ -269,11 +270,11 @@ def plot_results(results, title):
         # average time plot
         if i == 1:
             data = data/s
-            plt.title("Avg Iteration Time")
+            plt.title("Avg Iteration Time (n=" + str(vector_size) + ")")
             plt.bar(m_idx, data)
         # total time per method
         else:
-            plt.title("Time Until Stop")
+            plt.title("Time Until Stop (n=" + str(vector_size) + ")")
             plt.bar(m_idx, data)
         plt.xticks(m_idx, m)
     

@@ -13,35 +13,27 @@ BETA = 0.5
 # initial value a_0 (acc grad desc)
 A = 0.9
 
-# estimate of the Lipschitz Constant
-LIPSCHITZ = 3
-
 # momentum value
 MOMENTUM = 0.2#0.4
 
-# estimate of the Condition Number
-KAPPA = 2
-RECIPROCAL_KAPPA = 1 / KAPPA
+ITERATIONS = 10
 
-ITERATIONS = 32
-
-EARLY_STOP=1E-3
+EARLY_STOP=1E-4
 
 BRACKET_HIGH=1.0
 
 sizes = [5, 10, 50]
 
-
 for size in sizes:
     x = init_x(size)
     results = {}
     # perform all the methods and store them in a dictionary
-    results['Gradient Descent'] = gradient_descent(x, ITERATIONS, ALPHA, BETA, early_stop=EARLY_STOP)
-    results['Heavy Ball'] = heavy_ball(x, ITERATIONS, ALPHA, BETA, MOMENTUM, early_stop=EARLY_STOP)
-    results['Conjugate Gradient'] = conjugate_gradient(x, ITERATIONS, BRACKET_HIGH, early_stop=EARLY_STOP)
+    #results['Gradient Descent'] = gradient_descent(x, ITERATIONS, ALPHA, BETA, early_stop=EARLY_STOP)
+    #results['Heavy Ball'] = heavy_ball(x, ITERATIONS, ALPHA, BETA, MOMENTUM, early_stop=EARLY_STOP)
+    #results['Conjugate Gradient'] = conjugate_gradient(x, ITERATIONS, BRACKET_HIGH, early_stop=EARLY_STOP)
     results['Accelerated Gradient Descent'] = accelerated_gradient_descent(x, \
-            ITERATIONS, ALPHA, BETA, A, LIPSCHITZ, RECIPROCAL_KAPPA, early_stop=EARLY_STOP)
-    results['FISTA'] = fista(x, ITERATIONS, ALPHA, BETA, early_stop=EARLY_STOP)
-    results['Barzilai Borwein'] = barzilai_borwein(x, ITERATIONS, early_stop=EARLY_STOP)
+            ITERATIONS, ALPHA, BETA, A, early_stop=EARLY_STOP)
+    #results['FISTA'] = fista(x, ITERATIONS, ALPHA, BETA, early_stop=EARLY_STOP)
+    #results['Barzilai Borwein'] = barzilai_borwein(x, ITERATIONS, early_stop=EARLY_STOP)
 
-    plot_results(results, 'Convergences for Size' + str(size))
+    plot_results(results, str(size))
