@@ -23,11 +23,11 @@ MOMENTUM = 0.2#0.4
 KAPPA = 2
 RECIPROCAL_KAPPA = 1 / KAPPA
 
-ITERATIONS = 32
+ITERATIONS = 12
 
-EARLY_STOP=1E-2
+EARLY_STOP=0
 
-sizes = [50]
+sizes = [5]
 
 
 for size in sizes:
@@ -39,7 +39,7 @@ for size in sizes:
     #results['Conjugate Gradient'] = 
     results['Accelerated Gradient Descent'] = accelerated_gradient_descent(x, \
             ITERATIONS, ALPHA, BETA, A, LIPSCHITZ, RECIPROCAL_KAPPA)
-    #results['FISTA'] = fista(x, ITERATIONS, LIPSCHITZ)
+    results['FISTA'] = fista(x, ITERATIONS, ALPHA, BETA)
     results['Barzilai Borwein'] = barzilai_borwein(x, ITERATIONS)
 
     line_graph(results, 'Convergences for Size' + str(size))

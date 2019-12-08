@@ -117,20 +117,22 @@ def agd_iter(x, y, alpha, beta, a, lipschitz, recip_kappa):
 
 
 
-def fista(x_init, iterations, lipschitz, early_stop=0):
+def fista(x_init, iterations, alpha, beta, early_stop=0):
 
     # packed arguments for the iterator
-    arguments = [x_init, x_init, 1, lipschitz]
+    arguments = [x_init, x_init, 1, alpha, beta]
 
     # call the iterator
     results, iters, total_runtime = iterator(fista_iter, arguments, iterations, early_stop)
     return results, iters, total_runtime 
 
-def fista_iter(x, y, t, lipschitz):
+def fista_iter(x, y, t, alpha, beta):
     
     # get the start time of the iteration
     start_time = time.time()
-
+    
+    t_next = 0.5 * (1 + math.sqrt(1 + (4 * (t**2))))
+    '''
     der_g_y = np.zeros_like(y, dtype=np.float64)
     for i in range(0, y.shape[0]-1):
         der_g_y[i] += 1 - (2 * y[i]) + (y[i]**2)
@@ -141,9 +143,14 @@ def fista_iter(x, y, t, lipschitz):
     t_next = 0.5 * (1 + math.sqrt(1 + (4 * (t**2))))
 
     print(t)
+    '''
+    step_size = line_search(gradient(x), eval_objective(x), x, alpha, beta)
+
+    x_next = y - (step_size * gradient(y))
 
     y_next = x_next + ( ((t - 1) / t_next) * (x_next - x) )
-    return [x_next, y_next, t_next, lipschitz], (time.time() - start_time)
+
+    return [x_next, y_next, t_next, alpha, beta], (time.time() - start_time)
 
 
 

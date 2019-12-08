@@ -149,9 +149,12 @@ def line_search(grad, obj_val, x, alpha, beta):
 #       average_runtime : average runtimer per iteration
 #
 def iterator(method_iterator, arguments, iterations, early_stop):
-
+    # array to store the objective values at each x_i
     results = np.zeros((iterations,1))
     total_runtime = 0.0
+
+    # declare x_{i-1} for scope reasons
+    x_imo = 0
 
     # get the starting point objective value
     results[0] = eval_objective(arguments[0])
@@ -162,61 +165,95 @@ def iterator(method_iterator, arguments, iterations, early_stop):
         arguments, iteration_time = method_iterator(*arguments) 
 
         # get value at x_i (x_i always first argument)
-        results[i] = eval_objective(arguments[0])
+        x_i = arguments[0]
+        results[i] = eval_objective(x_i)
         total_runtime += iteration_time
 
-        # check for early stopping if method hasn't
-        # changed by some amount since last iteration
-        if results[i] == 0 or ( (i > 0) and abs(results[i] - results[i-1]) <= early_stop):
+        # check for early stopping by relative error
+        if results[i] == 0 or ( (i > 0) and 
+                np.linalg.norm(x_i - x_imo, ord=2) <= 
+                ( early_stop * np.linalg.norm(x_i, ord=2) ) ):
             return results, i + 1, total_runtime
+
+        # update x_{i-1} for stopping condition
+        x_imo = x_i
 
     return results, iterations, total_runtime
 
 def line_graph(results, title):
     # plot for each method in the data by the key and
     # note that the 0'th element is the array of obj vals
-    plt.subplot(2, 1, 1)
-    for key in results:
-        # get the number of iterations the algorithm needed to finish
-        complete_iter = results[key][1]
-        # create indicies for each iteration
-        iterations = np.arange(complete_iter) + 1
 
-        # plot only up to the point where it finds the minimum
-        plt.plot(iterations, results[key][0][:complete_iter], label=key)
-        plt.ylabel('Objective Value f(x)')
-        plt.xlabel('Iteration')
-        plt.title('Method Convergence')
-        plt.grid(True)
+    # turn on interactive mode to open all the graphs without blocking
+    #plt.ion()
+
+    # plot the objective value graphs
+    for i in range(2):
+        #plt.subplot(3, 1, i+1)
+        for key in results:
+            # get the number of iterations the algorithm needed to finish
+            complete_iter = results[key][1]
+            # create indicies for each iteration
+            iterations = np.arange(complete_iter) + 1
     
-    # set up the rest of the line graph
-    plt.ylabel('Objective Value f(x)')
-    plt.xlabel('Iteration')
-    plt.title(title)
-    plt.grid(True)
-    plt.legend()
-    plt.yscale("log")
-    # show it
-#    plt.show()
+            # plot only up to the point where it finds the minimum
+            plt.plot(iterations, results[key][0][:complete_iter], label=key)
+        
+        # set up the rest of the line graph
+        plt.ylabel('Objective Value')
+        plt.xlabel('Iteration')
+        plt.title("Linear Comparison")
+        plt.grid(True)
+        plt.legend()
 
-#def time_graph(results, title):
+        # change to log scale
+        if i == 1:
+            plt.yscale("log")
+            plt.yscale("log")
 
-    plt.subplot(2, 1, 2)
+        plt.show()
+
     m = []
     t = []
+    s = []
 
     for key in results:
         m.append(key)
-        t.append(results[key][2])
+        s.append(results[key][1])
+        # get seconds and convert to milliseconds
+        t.append(results[key][2] * 1000)
 
-    y_val = np.arange(len(m))
-    plt.bar(y_val, t)
-    plt.xticks(y_val, m)
+    # convert t and s to numpy arrays for easier element-wise division
+    t = np.array(t)
+    s = np.array(s)
 
-    # set up the rest of the line graph
-    plt.ylabel('Time in Seconds')
-    plt.xlabel('Method')
-    plt.title(title)
-    plt.grid(True)
-    # show it
-    plt.show()
+    m_idx = np.arange(len(m))
+
+    # plot the time graphs
+    for i in range(2):
+        #plt.subplot(3, i+1, 3)
+
+        data = t
+
+        # average time plot
+        if i == 1:
+            data = data/s
+            plt.title("Avg Iteration Time")
+            plt.bar(m_idx, data)
+        # total time per method
+        else:
+            plt.title("Time Until Stop")
+            plt.bar(m_idx, data)
+        plt.xticks(m_idx, m)
+    
+        for y in range(len(m_idx)):
+            plt.text(x=m_idx[y]-0.2, y=data[y]+0.05, s="{:.3f}".format(data[y]), size=10)
+    
+        #plt.subplots_adjust(top=2)
+    
+        # set up the rest of the line graph
+        plt.ylabel("Time (ms)")
+        plt.xlabel("Method")
+        plt.grid(True)
+        # show it
+        plt.show()
