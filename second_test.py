@@ -8,16 +8,16 @@ from methods import gradient_descent, heavy_ball, barzilai_borwein, \
 # Inexact Line Search
 # Backtracking Constants
 ALPHA = 0.5
-BETA = 0.5
+BETA = 0.75
 
 # initial value a_0 (acc grad desc)
-A = 0.5
+A = 0.9
 
 # Upper bound for step size in exact line search
 BRACKET_HIGH=1.0
 
 # momentum value
-MOMENTUM = 0.5#0.4
+MOMENTUM = 0.2
 
 # number of iterations to perform
 ITERATIONS = 10

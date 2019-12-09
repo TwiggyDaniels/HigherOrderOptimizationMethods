@@ -17,7 +17,7 @@ A = 0.5
 BRACKET_HIGH=1.0
 
 # momentum value
-MOMENTUM = 0.5#0.4
+MOMENTUM = 0.5
 
 # number of iterations to perform
 ITERATIONS = 10

@@ -7,17 +7,17 @@ from methods import gradient_descent, heavy_ball, barzilai_borwein, \
 
 # Inexact Line Search
 # Backtracking Constants
-ALPHA = 0.5
-BETA = 0.5
+ALPHA = 0.4
+BETA = 0.75
 
 # initial value a_0 (acc grad desc)
-A = 0.5
+A = 0.7
 
 # Upper bound for step size in exact line search
 BRACKET_HIGH=1.0
 
 # momentum value
-MOMENTUM = 0.5#0.4
+MOMENTUM = 0.3
 
 # number of iterations to perform
 ITERATIONS = 10
@@ -37,7 +37,7 @@ for size in sizes:
     results['Conjugate Gradient'] = conjugate_gradient(x, ITERATIONS, BRACKET_HIGH, early_stop=EARLY_STOP)
     results['Accelerated Gradient Descent'] = accelerated_gradient_descent(x, \
             ITERATIONS, ALPHA, BETA, A, early_stop=EARLY_STOP)
-    results['FISTA'] = fista(x, ITERATIONS, ALPHA, BETA, early_stop=EARLY_STOP)
+    results['FISTA'] = fista(x, ITERATIONS, 0.5, 0.9, early_stop=EARLY_STOP)
     results['Barzilai Borwein'] = barzilai_borwein(x, ITERATIONS, early_stop=EARLY_STOP)
 
     # plot all of the results
