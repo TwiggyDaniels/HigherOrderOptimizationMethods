@@ -4,7 +4,7 @@ import math
 import numpy as np
 
 from helpers import eval_objective, gradient, find_a_next, find_dynamic_momentum, \
-    inexact_line_search, exact_line_search, iterator
+    inexact_line_search, exact_line_search, iterator, polak_rebiere
 
 # Perform the gradient descent method
 def gradient_descent(x_init, iterations, alpha, beta, early_stop=0):
@@ -67,35 +67,47 @@ def hb_iter(x, x_prev, alpha, beta, momentum):
 
 
 
-
-def conjugate_gradient(x_init, iterations, bracket_high, early_stop=0):
+def conjugate_gradient(x_init, iterations, bracket_high, epsilon=0, early_stop=0):
     
     # get the start time of the iteration
     start_time = time.time()
     
-    arguments = [x_init, bracket_high]
+    arguments = [x_init, epsilon, bracket_high]
 
     # call the iterator
     results, iters, total_runtime = iterator(conj_grad_iter, arguments, iterations, early_stop)
     return results, iters, total_runtime 
 
-def conj_grad_iter(x, bracket_high):
+def conj_grad_iter(x, epsilon, bracket_high):
 
     # get the start time of the iteration
     start_time = time.time()
 
     d = -1 * gradient(x)
-
+    y = x
+    j = 1
     # perform the inner loop of the method but one time since scalar output
-    # NOTE: d is made positive since inexact_line_search performs 
-    # argmin(x - s * grad)
-    step_size = exact_line_search(x, -1 * d, 
-            bracket_high = bracket_high)
+    while np.linalg.norm(gradient(y), ord=2) > epsilon:
+        # line 2
+        step_size = exact_line_search(y, -1 * d, 
+                bracket_high = bracket_high)
+        y_next = y + (step_size * d)
+
+        if j == x.shape[0]:
+            break
+
+        # line 3
+        d = (-1 * gradient(y_next)) + (polak_rebiere(gradient(y_next), gradient(y)) * d)
+
+        y = y_next
+        j += 1
 
     # update x_next
-    x_next = x + (step_size * d)
+    x_next = y
 
-    return [x_next, bracket_high], (time.time() - start_time)
+    return [x_next, epsilon, bracket_high], (time.time() - start_time)
+
+
 
 
 def accelerated_gradient_descent(x_init, iterations, alpha, beta, a, early_stop=0):

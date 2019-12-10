@@ -9,7 +9,7 @@ Requirements:
 	3) Python packages in requirements.txt
 		pip3 install -r requirements.txt
 Running Experiments:
-	python3 first_test.py
-	python3 second_test.py
+	python3 size_n#_search.py
+	python3 size_n#_test.py
 	...
 	etc.

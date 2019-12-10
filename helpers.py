@@ -168,6 +168,9 @@ def exact_line_search(x, grad, bracket_high=1, attempts=100, early_stop=1E-5):
 
     return (high + low) / 2
 
+def polak_rebiere(grad_y_next, grad_y):
+    return np.dot(grad_y_next, (grad_y_next - grad_y)) / (np.linalg.norm(grad_y, ord=2)**2)
+
 # Optimize the objective function with the provided argument
 #
 #   method_iterator : a function to perform a single iteration of a method 
@@ -184,7 +187,7 @@ def exact_line_search(x, grad, bracket_high=1, attempts=100, early_stop=1E-5):
 #
 def iterator(method_iterator, arguments, iterations, early_stop):
     # array to store the objective values at each x_i
-    results = np.zeros((iterations,1))
+    results = np.zeros((iterations + 1, 1))
     total_runtime = 0.0
 
     # declare x_{i-1} for scope reasons
@@ -193,7 +196,7 @@ def iterator(method_iterator, arguments, iterations, early_stop):
     # get the starting point objective value
     results[0] = eval_objective(arguments[0])
 
-    for i in range(1, iterations):
+    for i in range(1, results.shape[0]):
 
         # pass the unpacked arguments and hand to the passed function
         arguments, iteration_time = method_iterator(*arguments) 
@@ -207,28 +210,26 @@ def iterator(method_iterator, arguments, iterations, early_stop):
         if results[i] == 0 or ( (i > 0) and 
                 np.linalg.norm(x_i - x_imo, ord=2) < 
                 ( early_stop * np.linalg.norm(x_i, ord=2) ) ):
-            return results, i + 1, total_runtime
+            return results, i, total_runtime
 
         # update x_{i-1} for stopping condition
         x_imo = x_i
 
     return results, iterations, total_runtime
 
-def plot_results(results, vector_size):
+def display_results(results, vector_size):
     # plot for each method in the data by the key and
     # note that the 0'th element is the array of obj vals
 
     # plot the objective value graphs
     for i in range(2):
-        #plt.subplot(3, 1, i+1)
         for key in results:
             # get the number of iterations the algorithm needed to finish
             complete_iter = results[key][1]
             # create indicies for each iteration
-            iterations = np.arange(complete_iter) + 1
-    
+            iterations = np.arange(complete_iter + 1)
             # plot only up to the point where it finds the minimum
-            plt.plot(iterations, results[key][0][:complete_iter], label=key)
+            plt.plot(iterations, results[key][0][:complete_iter + 1], label=key)
         
         # set up the rest of the line graph
         plt.ylabel('Objective Value')
@@ -249,7 +250,10 @@ def plot_results(results, vector_size):
     t = []
     s = []
 
+    print("\tFinal Objective Values [f(x)] for Vector Size :", vector_size)
     for key in results:
+        # really messay way to get the final objective value TODO: clean this up
+        print("\t\t{:32} {}".format(key, results[key][0][results[key][1]]))
         m.append(key)
         s.append(results[key][1])
         # get seconds and convert to milliseconds
